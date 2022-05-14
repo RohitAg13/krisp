@@ -1,5 +1,6 @@
 async function summarize(text) {
-  const url = new URL("http://localhost:8000/summarize");
+  const url = new URL("http://127.0.0.1:8000");
+  url.pathname = "/summarize";
   var myHeaders = new Headers();
   myHeaders.append("Content-Type", "application/json");
   try {
@@ -9,7 +10,7 @@ async function summarize(text) {
       body: JSON.stringify({ text: text }),
     });
     const docs = await resp.json();
-    return docs.results;
+    return docs;
   } catch (e) {
     console.error(`[krisp] error: could not load similar: ${e}`);
     return [];
