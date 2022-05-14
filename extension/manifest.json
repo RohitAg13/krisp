@@ -1,0 +1,38 @@
+{
+    "manifest_version": 3,
+    "name": "Krisp",
+    "version": "0.1",
+    "action": {
+        "default_title": "Automatic Summary"
+    },
+    "description": "context-aware website summarizer",
+    "background": {
+        "service_worker": "worker.js"
+    },
+    "content_scripts": [
+        {
+            "matches": [
+                "*://*/*"
+            ],
+            "js": [
+                "Readability.js",
+                "content.js"
+            ],
+            "run_at": "document_idle"
+        }
+    ],
+    "commands": {
+        "_execute_action": {
+            "suggested_key": {
+                "default": "Ctrl+Shift+S",
+                "mac": "Command+Shift+S"
+            }
+        }
+    },
+    "homepage_url": "https://github.com/RohitAg13/krisp",
+    "incognito": "spanning",
+    "offline_enabled": true,
+    "permissions": [
+        "tabs"
+    ]
+}
