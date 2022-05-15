@@ -16,6 +16,7 @@
             ],
             "js": [
                 "Readability.js",
+                "common.css.js",
                 "content.js"
             ],
             "run_at": "document_idle"

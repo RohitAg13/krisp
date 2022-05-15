@@ -8,6 +8,7 @@ from nltk.corpus import stopwords
 
 MAX_RESULTS = 15
 STOPWORD_LANGUAGE = "english"
+THRESHOLD_FACTOR = 2
 
 
 def create_frequency_table(text_string: str) -> dict:
@@ -155,5 +156,5 @@ def run_summarization(text: str) -> List[str]:
 
     sentence_scores = score_sentences(tf_idf_matrix)
     threshold = find_average_score(sentence_scores)
-    summary = generate_summary(sentences, sentence_scores, 1.3 * threshold)
+    summary = generate_summary(sentences, sentence_scores, THRESHOLD_FACTOR * threshold)
     return summary

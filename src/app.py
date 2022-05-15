@@ -1,4 +1,5 @@
 from pagerank import run_summarization
+from abstractive_summary import summarize
 
 from fastapi import FastAPI, Body
 from fastapi.middleware.cors import CORSMiddleware
@@ -20,10 +21,15 @@ async def health_check():
     return {"success": True}
 
 
-@app.post("/summarize")
-async def endpoint_summarize(text: str = Body(..., embed=True)):
+@app.post("/summary/extract")
+async def endpoint_extractive_summary(text: str = Body(..., embed=True)):
     summary = run_summarization(text)
     return summary
+
+
+@app.post("/summary/abstract")
+async def endpoint_abstractive_summary(text: str = Body(..., embed=True)):
+    return summarize(text)
 
 
 if __name__ == "__main__":
