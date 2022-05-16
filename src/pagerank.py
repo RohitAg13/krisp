@@ -1,19 +1,19 @@
-import re
 import math
-from typing import List
 from functools import lru_cache
+from typing import List
 
-import nltk
 import networkx as nx
 import numpy as np
 import pandas as pd
-
 from nltk.corpus import stopwords
 from nltk.tokenize import sent_tokenize
 from sklearn.metrics.pairwise import cosine_similarity
 
-MAX_RESULTS = 15
+MAX_RESULTS = 15  # maximum number of sentences in the summary
+FACTOR = 0.2  # percentage of total sentences to be returned as summary
+VECTOR_SIZE = 50  # Size of the Glove vector. Possible values: 50,100,200,300
 stop_words = stopwords.words("english")
+
 
 def remove_stopwords(sentence):
     return " ".join([word for word in sentence if word not in stop_words])
@@ -35,8 +35,8 @@ def format_sentences(sentences: List[str]) -> List[str]:
 
 
 # Extract word vectors
-# @lru_cache()
-def get_word_embedding(filename: str = "glove.6B.100d.txt"):
+@lru_cache()
+def get_word_embedding(filename: str = f"glove.6B.{VECTOR_SIZE}d.txt"):
     word_embeddings = {}
     with open(filename, encoding="utf-8") as f:
         for line in f:
@@ -47,17 +47,16 @@ def get_word_embedding(filename: str = "glove.6B.100d.txt"):
     return word_embeddings
 
 
-def create_sentence_embedding(
-    sentences: pd.Series, word_embeddings=get_word_embedding()
-) -> List[List[float]]:
+def create_sentence_embedding(sentences: pd.Series) -> List[List[float]]:
     sentence_vectors = []
+    word_embeddings = get_word_embedding()
     for i in sentences:
         if len(i) != 0:
-            v = sum([word_embeddings.get(w, np.zeros((100,))) for w in i.split()]) / (
-                len(i.split()) + 0.001
-            )
+            v = sum(
+                [word_embeddings.get(w, np.zeros((VECTOR_SIZE,))) for w in i.split()]
+            ) / (len(i.split()) + 0.001)
         else:
-            v = np.zeros((100,))
+            v = np.zeros((VECTOR_SIZE,))
         sentence_vectors.append(v)
     return sentence_vectors
 
@@ -71,12 +70,13 @@ def create_similarity_matrix(
             if i == j:
                 continue
             similarity_matrix[i][j] = cosine_similarity(
-                sentence_vectors[i].reshape(1, 100), sentence_vectors[j].reshape(1, 100)
+                sentence_vectors[i].reshape(1, VECTOR_SIZE),
+                sentence_vectors[j].reshape(1, VECTOR_SIZE),
             )[0, 0]
     return similarity_matrix
 
 
-def get_pageranked(sentences: List[str], similarity_matrix: List[List[float]]):
+def rank_sentences(sentences: List[str], similarity_matrix: List[List[float]]):
     nx_graph = nx.from_numpy_array(similarity_matrix)
     scores = nx.pagerank(nx_graph)
     ranked_sentences = sorted(
@@ -85,18 +85,17 @@ def get_pageranked(sentences: List[str], similarity_matrix: List[List[float]]):
     return ranked_sentences
 
 
-def get_summary(text: str, max_sentences: int = 20, factor: float = 0.2) -> List[str]:
+def get_summary(text: str) -> List[str]:
     raw_sentences = create_sentences(text)
     sentences = format_sentences(raw_sentences)
     sentence_embedding = create_sentence_embedding(sentences=sentences)
     similarity_matrix = create_similarity_matrix(
         sentences=sentences, sentence_vectors=sentence_embedding
     )
-    ranked_sentences = get_pageranked(
+    ranked_sentences = rank_sentences(
         sentences=raw_sentences, similarity_matrix=similarity_matrix
     )
-    max_sentences = min(max_sentences, math.ceil(factor * len(sentences)))
-    # Generate summary
+    max_sentences = min(MAX_RESULTS, math.ceil(FACTOR * len(sentences)))
     return [s[1] for s in ranked_sentences[:max_sentences]]
 
 
