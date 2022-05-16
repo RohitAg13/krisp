@@ -1,4 +1,4 @@
-from pagerank import run_summarization
+from pagerank import get_summary
 from abstractive_summary import summarize
 
 from fastapi import FastAPI, Body
@@ -23,7 +23,7 @@ async def health_check():
 
 @app.post("/summary/extract")
 async def endpoint_extractive_summary(text: str = Body(..., embed=True)):
-    summary = run_summarization(text)
+    summary = get_summary(text)
     return summary
 
 

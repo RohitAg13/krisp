@@ -1,160 +1,117 @@
-from typing import List
+import re
 import math
+from typing import List
+from functools import lru_cache
 
-from nltk import sent_tokenize, word_tokenize, PorterStemmer
+import nltk
+import networkx as nx
+import numpy as np
+import pandas as pd
+
 from nltk.corpus import stopwords
-
-# code ported from https://towardsdatascience.com/text-summarization-using-tf-idf-e64a0644ace3
+from nltk.tokenize import sent_tokenize
+from sklearn.metrics.pairwise import cosine_similarity
 
 MAX_RESULTS = 15
-STOPWORD_LANGUAGE = "english"
-THRESHOLD_FACTOR = 2
+stop_words = stopwords.words("english")
+
+def remove_stopwords(sentence):
+    return " ".join([word for word in sentence if word not in stop_words])
 
 
-def create_frequency_table(text_string: str) -> dict:
-    stopWords = set(stopwords.words(STOPWORD_LANGUAGE))
-    words = word_tokenize(text_string)
-    ps = PorterStemmer()
-
-    freqTable = dict()
-    for word in words:
-        word = ps.stem(word)
-        if word in stopWords:
-            continue
-        if word in freqTable:
-            freqTable[word] += 1
-        else:
-            freqTable[word] = 1
-    return freqTable
+def create_sentences(text: str) -> List[str]:
+    # Breaks text into list of sentences.
+    return sent_tokenize(text)
 
 
-def create_frequency_matrix(sentences: List[str]) -> dict:
-    frequency_matrix = {}
-    stopWords = set(stopwords.words(STOPWORD_LANGUAGE))
-    ps = PorterStemmer()
-    for sent in sentences:
-        freq_table = {}
-        words = word_tokenize(sent)
-        for word in words:
-            word = word.lower()
-            word = ps.stem(word)
-            if word in stopWords:
-                continue
-
-            if word in freq_table:
-                freq_table[word] += 1
-            else:
-                freq_table[word] = 1
-
-        frequency_matrix[sent[:MAX_RESULTS]] = freq_table
-
-    return frequency_matrix
+def format_sentences(sentences: List[str]) -> List[str]:
+    # remove punctuations, numbers and special characters
+    clean_sentences = pd.Series(sentences).replace("[^a-zA-Z]", " ")
+    # make alphabets lowercase
+    clean_sentences = [s.lower() for s in clean_sentences]
+    # function to remove stopwords
+    clean_sentences = [remove_stopwords(r.split()) for r in clean_sentences]
+    return clean_sentences
 
 
-def create_tf_matrix(freq_matrix: dict) -> dict:
-    tf_matrix = {}
-    for sent, f_table in freq_matrix.items():
-        tf_table = {}
-        count_words_in_sentence = len(f_table)
-        for word, count in f_table.items():
-            tf_table[word] = count / count_words_in_sentence
-        tf_matrix[sent] = tf_table
-    return tf_matrix
+# Extract word vectors
+# @lru_cache()
+def get_word_embedding(filename: str = "glove.6B.100d.txt"):
+    word_embeddings = {}
+    with open(filename, encoding="utf-8") as f:
+        for line in f:
+            values = line.split()
+            word = values[0]
+            coefs = np.asarray(values[1:], dtype="float32")
+            word_embeddings[word] = coefs
+    return word_embeddings
 
 
-def create_documents_per_words(freq_matrix: dict) -> dict:
-    word_per_doc_table = {}
-    for sent, f_table in freq_matrix.items():
-        for word, count in f_table.items():
-            if word in word_per_doc_table:
-                word_per_doc_table[word] += 1
-            else:
-                word_per_doc_table[word] = 1
-    return word_per_doc_table
-
-
-def create_idf_matrix(
-    freq_matrix: dict, count_doc_per_words: dict, total_documents: int
-) -> dict:
-    idf_matrix = {}
-    for sent, f_table in freq_matrix.items():
-        idf_table = {}
-        for word in f_table.keys():
-            idf_table[word] = math.log10(
-                total_documents / float(count_doc_per_words[word])
+def create_sentence_embedding(
+    sentences: pd.Series, word_embeddings=get_word_embedding()
+) -> List[List[float]]:
+    sentence_vectors = []
+    for i in sentences:
+        if len(i) != 0:
+            v = sum([word_embeddings.get(w, np.zeros((100,))) for w in i.split()]) / (
+                len(i.split()) + 0.001
             )
-        idf_matrix[sent] = idf_table
-    return idf_matrix
+        else:
+            v = np.zeros((100,))
+        sentence_vectors.append(v)
+    return sentence_vectors
 
 
-def create_tf_idf_matrix(tf_matrix: dict, idf_matrix: dict) -> dict:
-    tf_idf_matrix = {}
-
-    for (sent1, f_table1), (sent2, f_table2) in zip(
-        tf_matrix.items(), idf_matrix.items()
-    ):
-        tf_idf_table = {}
-        for (word1, value1), (word2, value2) in zip(
-            f_table1.items(), f_table2.items()
-        ):  # here, keys are the same in both the table
-            tf_idf_table[word1] = float(value1 * value2)
-        tf_idf_matrix[sent1] = tf_idf_table
-    return tf_idf_matrix
-
-
-def score_sentences(tf_idf_matrix: dict) -> dict:
-    """
-    score a sentence by its word's TF
-    Basic algorithm: adding the TF frequency of every non-stop word in a sentence divided by total no of words in a sentence.
-    """
-    sentenceValue = {}
-    for sent, f_table in tf_idf_matrix.items():
-        total_score_per_sentence = 0
-        count_words_in_sentence = len(f_table)
-        for word, score in f_table.items():
-            total_score_per_sentence += score
-        sentenceValue[sent] = total_score_per_sentence / count_words_in_sentence
-    return sentenceValue
+def create_similarity_matrix(
+    sentences: List[str], sentence_vectors: List[List[float]]
+) -> List[List[float]]:
+    similarity_matrix = np.zeros([len(sentences), len(sentences)])
+    for i in range(len(sentences)):
+        for j in range(len(sentences)):
+            if i == j:
+                continue
+            similarity_matrix[i][j] = cosine_similarity(
+                sentence_vectors[i].reshape(1, 100), sentence_vectors[j].reshape(1, 100)
+            )[0, 0]
+    return similarity_matrix
 
 
-def find_average_score(sentenceValue: dict) -> int:
-    """
-    Find the average score from the sentence value dictionary
-    """
-    sumValues = 0
-    for entry in sentenceValue:
-        sumValues += sentenceValue[entry]
-    # Average value of a sentence from original summary_text
-    average = sumValues / len(sentenceValue)
-    return average
+def get_pageranked(sentences: List[str], similarity_matrix: List[List[float]]):
+    nx_graph = nx.from_numpy_array(similarity_matrix)
+    scores = nx.pagerank(nx_graph)
+    ranked_sentences = sorted(
+        ((scores[i], s) for i, s in enumerate(sentences)), reverse=True
+    )
+    return ranked_sentences
 
 
-def generate_summary(
-    sentences: List[str], sentenceValue: dict, threshold: float
-) -> List[str]:
-    sentence_count = 0
-    summary = []
-    for sentence in sentences:
-        if sentence[:MAX_RESULTS] in sentenceValue and sentenceValue[
-            sentence[:MAX_RESULTS]
-        ] >= (threshold):
-            summary.append(sentence)
-            sentence_count += 1
-    return summary
+def get_summary(text: str, max_sentences: int = 20, factor: float = 0.2) -> List[str]:
+    raw_sentences = create_sentences(text)
+    sentences = format_sentences(raw_sentences)
+    sentence_embedding = create_sentence_embedding(sentences=sentences)
+    similarity_matrix = create_similarity_matrix(
+        sentences=sentences, sentence_vectors=sentence_embedding
+    )
+    ranked_sentences = get_pageranked(
+        sentences=raw_sentences, similarity_matrix=similarity_matrix
+    )
+    max_sentences = min(max_sentences, math.ceil(factor * len(sentences)))
+    # Generate summary
+    return [s[1] for s in ranked_sentences[:max_sentences]]
 
 
-def run_summarization(text: str) -> List[str]:
-    sentences: List[str] = sent_tokenize(text)
-    total_documents: int = len(sentences)
-    freq_matrix = create_frequency_matrix(sentences)
-    tf_matrix = create_tf_matrix(freq_matrix)
-
-    count_doc_per_words = create_documents_per_words(freq_matrix)
-
-    idf_matrix = create_idf_matrix(freq_matrix, count_doc_per_words, total_documents)
-    tf_idf_matrix = create_tf_idf_matrix(tf_matrix, idf_matrix)
-
-    sentence_scores = score_sentences(tf_idf_matrix)
-    threshold = find_average_score(sentence_scores)
-    summary = generate_summary(sentences, sentence_scores, THRESHOLD_FACTOR * threshold)
-    return summary
+if __name__ == "__main__":
+    ## sanity tests
+    text = """Over the past few years as smartphone penetration boomed, products matured, product design and user experience matured, people's expectations have increased.
+No longer does a quickly thrown together prototype cut it. People expect a minimum level of good UX and ease-of-use, else they'll leave your app before even giving it a proper try.
+In fact, in 2022 great UX might be one strong reason people pick your product over incumbents. That's what happened with Transistor.fm, who made podcast hosting simple and easy.
+People expect good aesthetics that make a first impression, simply because that's what they have become used to from the plethora of beautiful and well-designed apps out there in the world.
+People expect products to be fully functional as advertised. Buggy products are not acceptable, and in fact people might quickly take to Twitter or social media to let others know that a product is unreliable.
+The MVP mindset intensely focuses on building the bare minimum, and that often leaves users frustrated and drives them to seek alternative solutions. Stiffer competition means that people WILL compare your product to alternatives in the market, it's inevitable. And unless you provide something unique and valuable that nobody else does, people are likely to leave.
+All these reasons and more make MVP a dated concept, especially in the context of SaaS products. But above all, I think the MVP mindset makes product builders think too heavily about the "minimum" and often so at the cost of "viable".
+That's a common pitfall and to avoid that, I propose the MLP framework."""
+    summary = get_summary(text)
+    assert isinstance(summary, list)
+    assert len(summary) > 0
+    assert isinstance(summary[0], str)
+    assert all(s in text for s in summary)

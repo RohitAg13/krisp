@@ -96,7 +96,7 @@ chrome.runtime.onMessage.addListener(async (msg) => {
       console.log(`[krisp] received message: ${msg.type}`);
 
       const content = getPageContent();
-      const extractiveSummary = await fetchAbstractiveSummary(content);
+      const extractiveSummary = await fetchExtractiveSummary(content);
 
       // highlights
       applyHighlights(extractiveSummary);
@@ -133,7 +133,7 @@ chrome.runtime.onMessage.addListener(async (msg) => {
 
       // Update received summary
       keypoints = compose({
-        summary: summary,
+        summary: extractiveSummary,
         loading: false,
         abstractiveSummary: abstractiveSummary,
       });
