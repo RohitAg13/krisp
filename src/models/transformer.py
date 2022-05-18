@@ -20,6 +20,7 @@ def get_summary(text: str) -> str:
 
 
 if __name__ == "__main__":
+    # sanity test
     text = """Over the past few years as smartphone penetration boomed, products matured, product design and user experience matured, people's expectations have increased.
 No longer does a quickly thrown together prototype cut it. People expect a minimum level of good UX and ease-of-use, else they'll leave your app before even giving it a proper try.
 In fact, in 2022 great UX might be one strong reason people pick your product over incumbents. That's what happened with Transistor.fm, who made podcast hosting simple and easy.

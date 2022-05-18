@@ -36,7 +36,7 @@ def format_sentences(sentences: List[str]) -> List[str]:
 
 # Extract word vectors
 @lru_cache()
-def get_word_embedding(filename: str = f"glove.6B.{VECTOR_SIZE}d.txt"):
+def get_word_embedding(filename: str = f"./corpus/glove.6B.{VECTOR_SIZE}d.txt"):
     word_embeddings = {}
     with open(filename, encoding="utf-8") as f:
         for line in f:
