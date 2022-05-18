@@ -167,5 +167,3 @@ const STYLES = `
         animation: slider 1s linear infinite;
     }
 `;
-
-// export default STYLES;

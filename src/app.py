@@ -1,5 +1,4 @@
 import time
-from typing import Optional
 
 import uvicorn
 
@@ -8,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from logger import create_logger
 from models.textrank import get_summary as textrank_summary
 from models.transformer import get_summary as transformer_summary
-from pydantic import BaseModel
+from request_models import SummaryRequest
 
 app = FastAPI()
 app.add_middleware(
@@ -19,11 +18,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 logging = create_logger(__name__)
-
-
-class SummaryRequest(BaseModel):
-    text: str
-    url: Optional[str] = None
 
 
 @app.middleware("http")
@@ -43,12 +37,12 @@ async def health_check():
 
 @app.post("/summary/extract")
 async def endpoint_extractive_summary(data: SummaryRequest):
-    return textrank_summary(data.text)
+    return textrank_summary(data)
 
 
 @app.post("/summary/abstract")
 async def endpoint_abstractive_summary(data: SummaryRequest):
-    return transformer_summary(data.text)
+    return transformer_summary(data)
 
 
 if __name__ == "__main__":

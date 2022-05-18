@@ -10,13 +10,13 @@ async function fetchExtractiveSummary(text) {
     const resp = await fetch(url, {
       method: "POST",
       headers: myHeaders,
-      body: JSON.stringify({ text: text }),
+      body: JSON.stringify({ text: text, url: location.href }),
     });
-    const docs = await resp.json();
-    return docs;
+    const result = await resp.json();
+    return result;
   } catch (e) {
     console.error(`[krisp] error: could not load similar: ${e}`);
-    return [];
+    return { success: false, highlights: [], apply_highlights: false };
   }
 }
 
@@ -31,11 +31,11 @@ async function fetchAbstractiveSummary(text) {
       headers: myHeaders,
       body: JSON.stringify({ text: text, url: location.href }),
     });
-    const docs = await resp.json();
-    return docs;
+    const result = await resp.json();
+    return result;
   } catch (e) {
     console.error(`[krisp] error: could not load similar: ${e}`);
-    return [];
+    return { success: false, summary: "" };
   }
 }
 
@@ -99,7 +99,10 @@ chrome.runtime.onMessage.addListener(async (msg) => {
       const extractiveSummary = await fetchExtractiveSummary(content);
 
       // highlights
-      applyHighlights(extractiveSummary);
+      if (extractiveSummary.apply_highlights) {
+        console.log("[krisp] applying highlights");
+        applyHighlights(extractiveSummary.highlights);
+      }
 
       // Create shadow container
       const shadowContainer = document.createElement("div");
@@ -133,9 +136,9 @@ chrome.runtime.onMessage.addListener(async (msg) => {
 
       // Update received summary
       keypoints = compose({
-        summary: extractiveSummary,
+        summary: extractiveSummary.highlights,
         loading: false,
-        abstractiveSummary: abstractiveSummary,
+        abstractiveSummary: abstractiveSummary.summary,
       });
       shadowEle.querySelector("#krisp-container").innerHTML = keypoints;
 
@@ -144,6 +147,7 @@ chrome.runtime.onMessage.addListener(async (msg) => {
         .querySelector("#closeButton")
         .addEventListener("click", function () {
           shadowEle.querySelector(".krisp-root").remove();
+          document.querySelector(".shadow-container").remove();
         });
     }
   }

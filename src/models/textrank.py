@@ -1,6 +1,7 @@
 import math
 from functools import lru_cache
 from typing import List
+from urllib.parse import urlparse
 
 import networkx as nx
 import numpy as np
@@ -9,6 +10,11 @@ from nltk.corpus import stopwords
 from nltk.tokenize import sent_tokenize
 from sklearn.metrics.pairwise import cosine_similarity
 
+from logger import create_logger
+from plugins import youtube
+from request_models import ExtractSummaryResponse, SummaryRequest
+
+logging = create_logger(__name__)
 MAX_RESULTS = 15  # maximum number of sentences in the summary
 FACTOR = 0.2  # percentage of total sentences to be returned as summary
 VECTOR_SIZE = 50  # Size of the Glove vector. Possible values: 50,100,200,300
@@ -85,8 +91,21 @@ def rank_sentences(sentences: List[str], similarity_matrix: List[List[float]]):
     return ranked_sentences
 
 
-def get_summary(text: str) -> List[str]:
-    raw_sentences = create_sentences(text)
+def get_summary(data: SummaryRequest) -> ExtractSummaryResponse:
+
+    # get transcript if the url belongs to youtube video
+    is_youtube_link = False
+    url = urlparse(data.url)
+    if url.netloc == "www.youtube.com" and url.path == "/watch":
+        data.text = youtube.get_transcript(data.url)
+        is_youtube_link = True
+
+    logging.info(f"length of text: {len(data.text)} words")
+    if not len(data.text):
+        return ExtractSummaryResponse(
+            success=False, highlights=[], apply_highlights=False
+        )
+    raw_sentences = create_sentences(data.text)
     sentences = format_sentences(raw_sentences)
     sentence_embedding = create_sentence_embedding(sentences=sentences)
     similarity_matrix = create_similarity_matrix(
@@ -96,7 +115,13 @@ def get_summary(text: str) -> List[str]:
         sentences=raw_sentences, similarity_matrix=similarity_matrix
     )
     max_sentences = min(MAX_RESULTS, math.ceil(FACTOR * len(sentences)))
-    return [s[1] for s in ranked_sentences[:max_sentences]]
+    highlights = ranked_sentences[:max_sentences]
+    logging.info(f"length of summary: {len(highlights)} sentences")
+    return ExtractSummaryResponse(
+        success=len(highlights) > 0,
+        apply_highlights=not is_youtube_link,
+        highlights=[s[1] for s in highlights],
+    )
 
 
 if __name__ == "__main__":
@@ -109,7 +134,9 @@ People expect products to be fully functional as advertised. Buggy products are 
 The MVP mindset intensely focuses on building the bare minimum, and that often leaves users frustrated and drives them to seek alternative solutions. Stiffer competition means that people WILL compare your product to alternatives in the market, it's inevitable. And unless you provide something unique and valuable that nobody else does, people are likely to leave.
 All these reasons and more make MVP a dated concept, especially in the context of SaaS products. But above all, I think the MVP mindset makes product builders think too heavily about the "minimum" and often so at the cost of "viable".
 That's a common pitfall and to avoid that, I propose the MLP framework."""
-    summary = get_summary(text)
+    result = get_summary(text)
+    assert isinstance(result, ExtractSummaryResponse)
+    summary = result.highlights
     assert isinstance(summary, list)
     assert len(summary) > 0
     assert isinstance(summary[0], str)
