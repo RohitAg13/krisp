@@ -20,6 +20,11 @@ The Krisp browser extension lives inside ./extension in this repositoty. Whereas
 
 ![Krisp Workflow](/public/workflow.gif)
 
+
+Now, it also comes with the **Reader Mode**
+Before             |  After
+:-------------------------:|:-------------------------:
+![](/public/before_reader_mode.png)  |  ![](/public/after_reader_mode.png)
 ### How to run locally
 
 

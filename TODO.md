@@ -2,6 +2,7 @@
 
 - [x] Add better version of textrank for extractive summary
 - [x] Summary for Youtube videos
+- [x] Distraction free reader mode
 - [ ] Add logo for Krisp
 - [ ] Add pop-up page to manage extension
 - [ ] Option to remove highlights from the page
