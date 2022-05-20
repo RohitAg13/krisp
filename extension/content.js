@@ -1,5 +1,18 @@
 const MAX_RESULTS = 20;
 const KRISP_ORIGIN = "http://127.0.0.1:8000";
+const NON_READABLE_DOMAINS = [
+  "www.youtube.com",
+  "www.vimeo.com",
+  "www.twitch.com",
+  "www.twitter.com",
+  "www.facebook.com",
+  "www.instagram.com",
+  "www.reddit.com",
+  "www.linkedin.com",
+  "www.pinterest.com",
+  "www.quora.com",
+  "www.flickr.com",
+];
 
 async function fetchExtractiveSummary(text) {
   const url = new URL(KRISP_ORIGIN);
@@ -97,14 +110,16 @@ chrome.runtime.onMessage.addListener(async (msg) => {
 
       const { content, textContent } = getPageContent();
       // Reader Mode
-      document.body.innerHTML = `
-        <html>
-            <style type="text/css">${READER_MODE_STYLES}
-            </style>
-            <body>${content}
-            </body>
-        </html>
+      if (!NON_READABLE_DOMAINS.includes(new URL(location.href).hostname)) {
+        document.body.innerHTML = `
+            <html>
+                <style type="text/css">${READER_MODE_STYLES}
+                </style>
+                <body>${content}
+                </body>
+            </html>
       `;
+      }
 
       const extractiveSummary = await fetchExtractiveSummary(textContent);
 
