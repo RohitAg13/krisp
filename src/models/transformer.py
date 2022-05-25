@@ -1,6 +1,12 @@
+import json
+from functools import partial
+from typing import Dict, List, Optional
 from urllib.parse import urlparse
 
+import requests
+
 from logger import create_logger
+from models.config import ModelSetting
 from plugins import youtube
 from request_models import AbstractiveSummaryResponse, SummaryRequest
 from transformers import pipeline
@@ -9,13 +15,32 @@ from transformers import pipeline
 # Pegasus: google/pegasus-large
 # mT5: sebuetnlp/mT5_multilingual_XLSum
 # BART: sshleifer/distilbart-cnn-12-6
-summarizer = pipeline(
-    "summarization",
-    model="sshleifer/distilbart-cnn-12-6",
-    max_length=1024,
-    truncation=True,
-)
 logging = create_logger(__name__)
+settings = ModelSetting()
+MODEL = "sshleifer/distilbart-cnn-12-6"
+
+
+def hugging_face_api_inference(
+    payload: str, model_name: str
+) -> Optional[List[Dict[str, str]]]:
+    API_URL = f"https://api-inference.huggingface.co/models/{model_name}"
+    headers = {"Authorization": f"Bearer {settings.hugging_face_api_key}"}
+    data = json.dumps(payload)
+    response = requests.post(API_URL, headers=headers, data=data)
+    if response.status_code != 200:
+        return None
+    return response.json()
+
+
+if settings.hugging_face_api_key:
+    summarizer = partial(hugging_face_api_inference, model_name=MODEL)
+else:
+    summarizer = pipeline(
+        "summarization",
+        model=MODEL,
+        max_length=1024,
+        truncation=True,
+    )
 
 
 def get_summary(data: SummaryRequest) -> AbstractiveSummaryResponse:
