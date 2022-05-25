@@ -7,9 +7,11 @@ Extractive summary uses word embeddings (Glove) and get the cosine similarity of
 ### Developement
 
 Install the dependencies
+
+> python.__version__ = 3.7.6
 ```
 python3 -m venv venv
-python3 install -r requirements.txt
+pip3 install -r requirements.txt
 ```
 
 Download stopword and sentence tokenizer data from `nltk`

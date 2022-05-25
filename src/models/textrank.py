@@ -5,7 +5,6 @@ from urllib.parse import urlparse
 
 import networkx as nx
 import numpy as np
-import pandas as pd
 from nltk.corpus import stopwords
 from nltk.tokenize import sent_tokenize
 from sklearn.metrics.pairwise import cosine_similarity
@@ -32,7 +31,7 @@ def create_sentences(text: str) -> List[str]:
 
 def format_sentences(sentences: List[str]) -> List[str]:
     # remove punctuations, numbers and special characters
-    clean_sentences = pd.Series(sentences).replace("[^a-zA-Z]", " ")
+    clean_sentences = list(map(lambda x: x.replace("[^a-zA-Z]", " "), sentences))
     # make alphabets lowercase
     clean_sentences = [s.lower() for s in clean_sentences]
     # function to remove stopwords
@@ -53,7 +52,7 @@ def get_word_embedding(filename: str = f"./corpus/glove.6B.{VECTOR_SIZE}d.txt"):
     return word_embeddings
 
 
-def create_sentence_embedding(sentences: pd.Series) -> List[List[float]]:
+def create_sentence_embedding(sentences: List[str]) -> List[List[float]]:
     sentence_vectors = []
     word_embeddings = get_word_embedding()
     for i in sentences:
