@@ -11,6 +11,7 @@ Install the dependencies
 > python.__version__ = 3.7.6
 ```
 python3 -m venv venv
+source venv/bin/activate
 pip3 install -r requirements.txt
 ```
 

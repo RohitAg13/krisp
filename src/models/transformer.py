@@ -73,7 +73,7 @@ People expect products to be fully functional as advertised. Buggy products are 
 The MVP mindset intensely focuses on building the bare minimum, and that often leaves users frustrated and drives them to seek alternative solutions. Stiffer competition means that people WILL compare your product to alternatives in the market, it's inevitable. And unless you provide something unique and valuable that nobody else does, people are likely to leave.
 All these reasons and more make MVP a dated concept, especially in the context of SaaS products. But above all, I think the MVP mindset makes product builders think too heavily about the "minimum" and often so at the cost of "viable".
 That's a common pitfall and to avoid that, I propose the MLP framework."""
-    result = get_summary(text)
+    result = get_summary(SummaryRequest(text=text))
     assert isinstance(result, AbstractiveSummaryResponse)
     summary = result.summary
     assert isinstance(summary, str)

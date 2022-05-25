@@ -7,7 +7,7 @@ import networkx as nx
 import numpy as np
 from nltk.corpus import stopwords
 from nltk.tokenize import sent_tokenize
-from sklearn.metrics.pairwise import cosine_similarity
+from numpy.linalg import norm
 
 from logger import create_logger
 from plugins import youtube
@@ -27,6 +27,10 @@ def remove_stopwords(sentence):
 def create_sentences(text: str) -> List[str]:
     # Breaks text into list of sentences.
     return sent_tokenize(text)
+
+
+def cosine_similarity(A, B):
+    return np.dot(A, B) / (norm(A) * norm(B))
 
 
 def format_sentences(sentences: List[str]) -> List[str]:
@@ -75,9 +79,9 @@ def create_similarity_matrix(
             if i == j:
                 continue
             similarity_matrix[i][j] = cosine_similarity(
-                sentence_vectors[i].reshape(1, VECTOR_SIZE),
-                sentence_vectors[j].reshape(1, VECTOR_SIZE),
-            )[0, 0]
+                sentence_vectors[i],
+                sentence_vectors[j],
+            )
     return similarity_matrix
 
 
@@ -133,7 +137,7 @@ People expect products to be fully functional as advertised. Buggy products are 
 The MVP mindset intensely focuses on building the bare minimum, and that often leaves users frustrated and drives them to seek alternative solutions. Stiffer competition means that people WILL compare your product to alternatives in the market, it's inevitable. And unless you provide something unique and valuable that nobody else does, people are likely to leave.
 All these reasons and more make MVP a dated concept, especially in the context of SaaS products. But above all, I think the MVP mindset makes product builders think too heavily about the "minimum" and often so at the cost of "viable".
 That's a common pitfall and to avoid that, I propose the MLP framework."""
-    result = get_summary(text)
+    result = get_summary(SummaryRequest(text=text))
     assert isinstance(result, ExtractSummaryResponse)
     summary = result.highlights
     assert isinstance(summary, list)
