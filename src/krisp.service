@@ -1,0 +1,14 @@
+[Unit]
+Description=Summarizer
+After=network.target
+
+[Service]
+User=krisp-user
+Group=www-data
+WorkingDirectory=/home/krisp-user/krisp/src
+Environment="PATH=/home/krisp-user/krisp/src/venv/bin"
+ExecStart=/home/krisp-user/krisp/src/venv/bin/uvicorn app:app
+
+
+[Install]
+WantedBy=multi-user.target
