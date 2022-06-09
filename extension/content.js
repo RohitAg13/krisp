@@ -89,7 +89,11 @@ function getPageContent() {
     charThreshold: 20,
   });
   const article = readability.parse();
-  return { textContent: article.textContent, content: article.content };
+  return {
+    textContent: article.textContent,
+    content: article.content,
+    title: article.title,
+  };
 }
 
 function applyHighlights(summary) {
@@ -108,14 +112,14 @@ chrome.runtime.onMessage.addListener(async (msg) => {
     case "search": {
       console.log(`[krisp] received message: ${msg.type}`);
 
-      const { content, textContent } = getPageContent();
+      const { title, content, textContent } = getPageContent();
       // Reader Mode
       if (!NON_READABLE_DOMAINS.includes(new URL(location.href).hostname)) {
         document.body.innerHTML = `
             <html>
                 <style type="text/css">${READER_MODE_STYLES}
                 </style>
-                <body>${content}
+                <body><h1>${title}</h1>${content}
                 </body>
             </html>
       `;
@@ -153,7 +157,7 @@ chrome.runtime.onMessage.addListener(async (msg) => {
 
       // Fetch abstractive summary
       console.log("[krisp]: Fetching key takeaways");
-      const abstractiveSummary = await fetchAbstractiveSummary(textContent);
+      const abstractiveSummary = ""; //await fetchAbstractiveSummary(textContent);
 
       var shadowEle = document.querySelector(
         ".shadow-container:last-of-type"
