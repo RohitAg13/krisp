@@ -157,7 +157,7 @@ chrome.runtime.onMessage.addListener(async (msg) => {
 
       // Fetch abstractive summary
       console.log("[krisp]: Fetching key takeaways");
-      const abstractiveSummary = ""; //await fetchAbstractiveSummary(textContent);
+      const abstractiveSummary = await fetchAbstractiveSummary(textContent);
 
       var shadowEle = document.querySelector(
         ".shadow-container:last-of-type"
