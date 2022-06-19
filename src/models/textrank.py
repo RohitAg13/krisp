@@ -87,7 +87,7 @@ def create_similarity_matrix(
 
 def rank_sentences(sentences: List[str], similarity_matrix: List[List[float]]):
     nx_graph = nx.from_numpy_array(similarity_matrix)
-    scores = nx.pagerank(nx_graph)
+    scores = nx.pagerank_numpy(nx_graph)
     ranked_sentences = sorted(
         ((scores[i], s) for i, s in enumerate(sentences)), reverse=True
     )
