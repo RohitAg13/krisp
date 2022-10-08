@@ -19,16 +19,21 @@ source venv/bin/activate
 pip3 install -r requirements.txt
 ```
 
+On Mac, tokenizer build might fail and require you to install Rust, 
+```
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+```
+
 Download stopword and sentence tokenizer data from `nltk`
 ```
-python3 -m nltk.downloader punkt
-python3 -m nltk.downloader stopwords
+python3 -c "import nltk; nltk.download('punkt')"
+python3 -c "import nltk; nltk.download('stopwords')"
 ```
 
 Download glove embeddings
 ```
 wget http://nlp.stanford.edu/data/glove.6B.zip -P ./corpus
-unzip ./corpus/glove*.zip
+unzip ./corpus/glove*.zip ./corpus
 ```
 
 Run the app
@@ -46,6 +51,8 @@ http://localhost:8000/docs
 
 Deployment is managed by systemd. Copy the `krisp.service` file to `/etc/systemd/system/krisp.service` and update:
 
+* create user `adduser krisp-user`
+* add user to sudoers `usermod -aG sudo krisp-user`
 * replace `krisp-user` with your Linux user
 * replace `/home/krisp-user/krisp with your working directory
 

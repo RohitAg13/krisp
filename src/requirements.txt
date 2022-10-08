@@ -18,7 +18,7 @@ http3==0.6.7
 huggingface-hub==0.6.0
 hyperframe==5.2.0
 identify==2.5.0
-idna==3.3
+idna==2.8
 importlib-metadata==4.11.3
 ipython==7.33.0
 jedi==0.18.1

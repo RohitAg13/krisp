@@ -1,9 +1,9 @@
 import time
 
 import uvicorn
-
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+
 from logger import create_logger
 from models.textrank import get_summary as textrank_summary
 from models.transformer import get_summary as transformer_summary

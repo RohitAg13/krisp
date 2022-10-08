@@ -4,12 +4,12 @@ from typing import Dict, List, Optional
 from urllib.parse import urlparse
 
 import requests
+from transformers import pipeline
 
 from logger import create_logger
 from models.config import ModelSetting
 from plugins import youtube
 from request_models import AbstractiveSummaryResponse, SummaryRequest
-from transformers import pipeline
 
 # Available models:
 # Pegasus: google/pegasus-large
