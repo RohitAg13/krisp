@@ -96,14 +96,26 @@ function getPageContent() {
   };
 }
 
-function applyHighlights(summary) {
-  for (idx in summary) {
-    var text = summary[idx];
-    var innerHTML = document.body.innerHTML;
-    document.body.innerHTML = innerHTML.replace(
-      text,
-      "<mark>" + text + "</mark>"
-    );
+async function applyHighlights(summary) {
+  const url = new URL(KRISP_ORIGIN);
+  url.pathname = "/apply-marker";
+  var myHeaders = new Headers();
+  myHeaders.append("Content-Type", "application/json");
+  try {
+    const resp = await fetch(url, {
+      method: "POST",
+      headers: myHeaders,
+      body: JSON.stringify({
+        inner_html: document.body.innerHTML,
+        summaries: summary,
+      }),
+    });
+    const result = await resp.json();
+    document.body.innerHTML = result.inner_html;
+    return true;
+  } catch (e) {
+    console.error(`[krisp] error: could not apply hightlights: ${e}`);
+    return false;
   }
 }
 
@@ -130,7 +142,7 @@ chrome.runtime.onMessage.addListener(async (msg) => {
       // highlights
       if (extractiveSummary.apply_highlights) {
         console.log("[krisp] applying highlights");
-        applyHighlights(extractiveSummary.highlights);
+        await applyHighlights(extractiveSummary.highlights);
       }
 
       // Create shadow container

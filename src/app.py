@@ -1,13 +1,14 @@
 import time
 
 import uvicorn
-from fastapi import FastAPI, Request
+from fastapi import Body, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
+from fuzzy_replace import get_highlight
 from logger import create_logger
 from models.textrank import get_summary as textrank_summary
 from models.transformer import get_summary as transformer_summary
-from request_models import SummaryRequest
+from request_models import MarkerRequest, SummaryRequest
 
 app = FastAPI()
 app.add_middleware(
@@ -33,6 +34,13 @@ async def add_process_time_header(request: Request, call_next):
 @app.get("/health")
 async def health_check():
     return {"success": True}
+
+
+@app.post("/apply-marker")
+async def endpoint_apply_marker(data: MarkerRequest):
+    updated_html = get_highlight(data.inner_html, data.summaries)
+    print(updated_html)
+    return {"inner_html": updated_html}
 
 
 @app.post("/summary/extract")
