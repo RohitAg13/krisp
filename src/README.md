@@ -46,6 +46,12 @@ Checkout Swagger documentation
 http://localhost:8000/docs
 ```
 
+## Test
+
+```
+python3 -m pytest test
+```
+
 
 ## Deploy
 
