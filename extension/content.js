@@ -1,5 +1,5 @@
 const MAX_RESULTS = 20;
-const KRISP_ORIGIN = "http://127.0.0.1:8000";
+const KRISP_ORIGIN = "http://127.0.0.1:1111";
 const NON_READABLE_DOMAINS = [
   "www.youtube.com",
   "www.vimeo.com",

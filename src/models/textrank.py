@@ -1,6 +1,8 @@
 import math
+import re
 from functools import lru_cache
-from typing import List
+from time import perf_counter
+from typing import List, Tuple
 from urllib.parse import urlparse
 
 import networkx as nx
@@ -20,7 +22,7 @@ VECTOR_SIZE = 50  # Size of the Glove vector. Possible values: 50,100,200,300
 stop_words = stopwords.words("english")
 
 
-def remove_stopwords(sentence):
+def remove_stopwords(sentence: List[str]) -> str:
     return " ".join([word for word in sentence if word not in stop_words])
 
 
@@ -94,9 +96,28 @@ def rank_sentences(sentences: List[str], similarity_matrix: List[List[float]]):
     return ranked_sentences
 
 
+def remove_non_alphabets(text: str) -> str:
+    if not isinstance(text, str):
+        print(f"text: {text},\n\n type: {type(text)}")
+    return re.sub(r"[^a-zA-Z0-9]", "", text)
+
+
+def sort_highlight(highlights: List[Tuple[float, str]], text: str) -> List[str]:
+    """Sorts highlights based on the order of appearance in the text"""
+    # remove extra spaces from text
+    text = remove_non_alphabets(text)
+    cleaned_highlights = [
+        (i, remove_non_alphabets(h[1])) for i, h in enumerate(highlights)
+    ]
+    cleaned_highlights.sort(key=lambda x: text.find(x[1]))
+    sorted_data = [highlights[index] for index, _ in cleaned_highlights]
+    return sorted_data
+
+
 def get_summary(data: SummaryRequest) -> ExtractSummaryResponse:
 
     # get transcript if the url belongs to youtube video
+    start_time = perf_counter()
     is_youtube_link = False
     url = urlparse(data.url)
     if url.netloc == "www.youtube.com" and url.path == "/watch":
@@ -119,11 +140,17 @@ def get_summary(data: SummaryRequest) -> ExtractSummaryResponse:
     )
     max_sentences = min(MAX_RESULTS, math.ceil(FACTOR * len(sentences)))
     highlights = ranked_sentences[:max_sentences]
-    logging.info(f"length of summary: {len(highlights)} sentences")
+    sorted_highlights = sort_highlight(highlights, data.text)
+    logging.info(f"length of summary: {len(sorted_highlights)} sentences")
+    response_time = perf_counter() - start_time
     return ExtractSummaryResponse(
-        success=len(highlights) > 0,
+        url=data.url,
+        success=len(sorted_highlights) > 0,
         apply_highlights=not is_youtube_link,
-        highlights=[s[1] for s in highlights],
+        highlights=[s[1] for s in sorted_highlights],
+        word_count=len(data.text),
+        summary_word_count=sum([len(s[1]) for s in sorted_highlights]),
+        response_time=response_time,
     )
 
 

@@ -1,5 +1,6 @@
 import json
 from functools import partial
+from time import perf_counter
 from typing import Dict, List, Optional
 from urllib.parse import urlparse
 
@@ -45,6 +46,7 @@ else:
 
 def get_summary(data: SummaryRequest) -> AbstractiveSummaryResponse:
 
+    start_time = perf_counter()
     # get transcript if the url belongs to youtube video
     url = urlparse(data.url)
     if url.netloc == "www.youtube.com" and url.path == "/watch":
@@ -60,7 +62,15 @@ def get_summary(data: SummaryRequest) -> AbstractiveSummaryResponse:
     )
     summary = summarized[0]["summary_text"] if summarized else ""
     logging.info(f"length of summary: {len(summary)} sentences")
-    return AbstractiveSummaryResponse(success=len(summary) > 0, summary=summary)
+    response_time = perf_counter() - start_time
+    return AbstractiveSummaryResponse(
+        url=data.url,
+        success=len(summary) > 0,
+        word_count=len(data.text),
+        summary=summary,
+        response_time=response_time,
+        summary_word_count=len(summary),
+    )
 
 
 if __name__ == "__main__":
