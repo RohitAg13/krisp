@@ -27,7 +27,7 @@ identify==2.5.0
 idna==2.8
 importlib-metadata==4.11.3
 iniconfig==1.1.1
-ipython==7.33.0
+ipython==8.10.0
 jedi==0.18.1
 joblib==1.2.0
 Levenshtein==0.20.6
