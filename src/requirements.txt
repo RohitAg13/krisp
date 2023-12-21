@@ -78,7 +78,7 @@ threadpoolctl==3.1.0
 tokenizers==0.12.1
 toml==0.10.2
 tomli==2.0.1
-torch==1.11.0
+torch==1.13.1
 tqdm==4.64.0
 traitlets==5.2.0
 transformers==4.36.0
