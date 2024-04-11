@@ -24,7 +24,7 @@ httpx==0.23.3
 huggingface-hub==0.6.0
 hyperframe==5.2.0
 identify==2.5.0
-idna==2.8
+idna==3.7
 importlib-metadata==4.11.3
 iniconfig==1.1.1
 ipython==8.10.0
