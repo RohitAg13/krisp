@@ -79,7 +79,7 @@ tokenizers==0.12.1
 toml==0.10.2
 tomli==2.0.1
 torch==1.13.1
-tqdm==4.64.0
+tqdm==4.66.3
 traitlets==5.2.0
 transformers==4.36.0
 typed-ast==1.5.3
