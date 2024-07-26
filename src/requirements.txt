@@ -89,4 +89,4 @@ uvicorn==0.17.6
 virtualenv==20.14.1
 wcwidth==0.2.5
 youtube-transcript-api==0.4.4
-zipp==3.8.0
+zipp==3.19.1
